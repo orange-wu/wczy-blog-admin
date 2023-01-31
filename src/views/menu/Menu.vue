@@ -14,7 +14,7 @@
       <!-- 数据筛选 -->
       <div style="margin-left:auto">
         <el-input
-          v-model="keywords"
+          v-model="menuName"
           prefix-icon="el-icon-search"
           size="small"
           placeholder="请输入菜单名"
@@ -59,15 +59,12 @@
       <!-- 组件路径 -->
       <el-table-column prop="component" label="组件路径" />
       <!-- 是否隐藏 -->
-      <el-table-column disabled="true" prop="isHidden" label="隐藏" align="center" width="80">
+      <el-table-column prop="hidden" label="隐藏" align="center" width="80">
         <template slot-scope="scope">
           <el-switch
-            v-model="scope.row.isHidden"
-            active-color="#13ce66"
-            inactive-color="#F4F4F5"
-            :active-value="1"
-            :inactive-value="0"
+            v-model="scope.row.hidden"
             @change="changeDisable(scope.row)"
+            disabled="true"
           />
         </template>
       </el-table-column>
@@ -166,7 +163,7 @@
         </el-form-item>
         <!-- 显示状态 -->
         <el-form-item label="显示状态">
-          <el-radio-group v-model="menuForm.isHidden">
+          <el-radio-group v-model="menuForm.hidden">
             <el-radio :label="0">显示</el-radio>
             <el-radio :label="1">隐藏</el-radio>
           </el-radio-group>
@@ -189,7 +186,7 @@ export default {
   },
   data() {
     return {
-      keywords: "",
+      menuName: "",
       loading: true,
       addMenu: false,
       isCatalog: true,
@@ -203,7 +200,7 @@ export default {
         path: "",
         orderNum: 1,
         parentId: null,
-        isHidden: 0
+        hidden: false
       },
       iconList: [
         "el-icon-myshouye",
@@ -224,7 +221,7 @@ export default {
       this.axios
         .get("/api/admin/menus", {
           params: {
-            keywords: this.keywords
+            menuName: this.menuName
           }
         })
         .then(({ data }) => {
@@ -246,7 +243,7 @@ export default {
               path: "",
               orderNum: 1,
               parentId: null,
-              isHidden: 0
+              hidden: false
             };
             this.$refs.menuTitle.innerHTML = "新增菜单";
             this.menuForm.parentId = JSON.parse(JSON.stringify(menu.id));
@@ -267,7 +264,7 @@ export default {
           path: "",
           orderNum: 1,
           parentId: null,
-          isHidden: 0
+          hidden: false
         };
       }
       this.addMenu = true;
