@@ -2,7 +2,6 @@ import Layout from "@/layout/index.vue";
 import router from "../../router";
 import store from "../../store";
 import axios from "axios";
-import Vue from "vue";
 
 export function generaMenu() {
   // 查询用户菜单
@@ -28,7 +27,6 @@ export function generaMenu() {
       // 添加菜单到路由
       router.addRoutes(userMenuList);
     } else {
-      Vue.prototype.$message.error(data.message);
       router.push({ path: "/login" });
     }
   });

@@ -71,6 +71,8 @@ axios.interceptors.response.use(
   function(response) {
     switch (response.data.code) {
       case 40001:
+        //用户未登陆时清除缓存中的登录信息
+        sessionStorage.clear();
         Vue.prototype.$message({
           type: "error",
           message: response.data.message
