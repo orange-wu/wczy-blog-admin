@@ -87,7 +87,6 @@
             type="text"
             size="mini"
             @click="openModel(scope.row, 1)"
-            v-if="scope.row.children"
           >
             <i class="el-icon-plus" /> 新增
           </el-button>
@@ -110,13 +109,6 @@
     <el-dialog :visible.sync="addMenu" width="30%" top="12vh">
       <div class="dialog-title-container" slot="title" ref="menuTitle" />
       <el-form label-width="80px" size="medium" :model="menuForm">
-        <!-- 菜单类型 -->
-        <el-form-item label="菜单类型" v-if="show">
-          <el-radio-group v-model="isCatalog">
-            <el-radio :label="true">目录</el-radio>
-            <el-radio :label="false">一级菜单</el-radio>
-          </el-radio-group>
-        </el-form-item>
         <!-- 菜单名称 -->
         <el-form-item label="菜单名称">
           <el-input v-model="menuForm.name" style="width:220px" />
@@ -145,7 +137,7 @@
           </el-popover>
         </el-form-item>
         <!-- 组件路径 -->
-        <el-form-item label="组件路径" v-show="!isCatalog">
+        <el-form-item label="组件路径">
           <el-input v-model="menuForm.component" style="width:220px" />
         </el-form-item>
         <!-- 路由地址 -->
@@ -164,8 +156,8 @@
         <!-- 显示状态 -->
         <el-form-item label="显示状态">
           <el-radio-group v-model="menuForm.hidden">
-            <el-radio :label="0">显示</el-radio>
-            <el-radio :label="1">隐藏</el-radio>
+            <el-radio :label="false">显示</el-radio>
+            <el-radio :label="true">隐藏</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-form>
@@ -189,7 +181,6 @@ export default {
       menuName: "",
       loading: true,
       addMenu: false,
-      isCatalog: true,
       show: true,
       menuList: [],
       menuForm: {
@@ -232,7 +223,6 @@ export default {
     openModel(menu, type) {
       if (menu) {
         this.show = false;
-        this.isCatalog = false;
         switch (type) {
           case 1:
             this.menuForm = {
@@ -273,19 +263,19 @@ export default {
       this.menuForm.icon = icon;
     },
     saveOrUpdateMenu() {
-      if (this.menuForm.name.trim() == "") {
+      if (this.menuForm.name.trim() === "") {
         this.$message.error("菜单名不能为空");
         return false;
       }
-      if (this.menuForm.icon.trim() == "") {
+      if (this.menuForm.icon.trim() === "") {
         this.$message.error("菜单icon不能为空");
         return false;
       }
-      if (this.menuForm.component.trim() == "") {
+      if (this.menuForm.component.trim() === "") {
         this.$message.error("菜单组件路径不能为空");
         return false;
       }
-      if (this.menuForm.path.trim() == "") {
+      if (this.menuForm.path.trim() === "") {
         this.$message.error("菜单访问路径不能为空");
         return false;
       }
