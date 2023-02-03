@@ -13,20 +13,14 @@
       </el-button>
       <!-- 数据筛选 -->
       <div style="margin-left:auto">
-        <el-select
-          clearable
-          v-model="modularSearch"
-          placeholder="请选择来源"
+        <el-input
+          v-model="keywords"
+          prefix-icon="el-icon-search"
           size="small"
-          style="margin-right:1rem"
-        >
-          <el-option
-            v-for="item in modularOptions"
-            :key="item.modularId"
-            :label="item.modularValue"
-            :value="item.modularId"
-          />
-        </el-select>
+          placeholder="请输入资源名"
+          style="width:200px"
+          @keyup.enter.native="listResources"
+        />
         <el-button
           type="primary"
           size="small"
@@ -43,29 +37,26 @@
       v-loading="loading"
       :data="resourceList"
       row-key="id"
-      border
-      :span-method="cellMerge"
+      :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
     >
-      <el-table-column prop="modularName" label="模块名" width="120" />
-      <el-table-column prop="resourceName" label="接口名" width="150" />
-      <el-table-column prop="url" label="接口路径" width="200" />
-      <el-table-column prop="requestMethod" label="请求方式" width="100">
+      <el-table-column prop="resourceName" label="资源名" width="220" />
+      <el-table-column prop="url" label="资源路径" width="300" />
+      <el-table-column prop="requetMethod" label="请求方式">
         <template slot-scope="scope" v-if="scope.row.requestMethod">
           <el-tag :type="tagType(scope.row.requestMethod)">
             {{ scope.row.requestMethod }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column
-        prop="anonymous"
-        label="匿名访问"
-        align="center"
-        width="100"
-      >
+      <el-table-column prop="isAnonymous" label="匿名访问" align="center">
         <template slot-scope="scope">
           <el-switch
             v-if="scope.row.url"
-            v-model="scope.row.anonymous"
+            v-model="scope.row.isAnonymous"
+            active-color="#13ce66"
+            inactive-color="#F4F4F5"
+            :active-value="1"
+            :inactive-value="0"
             @change="changeResource(scope.row)"
           />
         </template>
@@ -73,11 +64,19 @@
       <el-table-column prop="createTime" label="创建时间" align="center">
         <template slot-scope="scope">
           <i class="el-icon-time" style="margin-right:5px" />
-          {{ scope.row.createTime | dateTime }}
+          {{ scope.row.createTime | date }}
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" width="200">
         <template slot-scope="scope">
+          <el-button
+            type="text"
+            size="mini"
+            @click="openAddResourceModel(scope.row)"
+            v-if="scope.row.children"
+          >
+            <i class="el-icon-plus" /> 新增
+          </el-button>
           <el-button
             type="text"
             size="mini"
@@ -145,65 +144,18 @@
 export default {
   created() {
     this.listResources();
-    this.getSpanArr(this.resourceList);
   },
   data() {
     return {
-      modularSearch: "",
-      modularOptions: [
-        {
-          modularId: "",
-          modularValue: ""
-        }
-      ],
-      spanArr: [],
       loading: true,
       keywords: "",
-      resourceList: [
-        {
-          id: "",
-          parentId: "",
-          modularName: "",
-          resourceName: "",
-          url: "",
-          requestMethod: "",
-          anonymous: false,
-          createTime: ""
-        }
-      ],
+      resourceList: [],
       addModule: false,
       addResource: false,
       resourceForm: {}
     };
   },
   methods: {
-    getSpanArr(data) {
-      for (let i = 0; i < data.length; i++) {
-        if (i === 0) {
-          this.spanArr.push(1);
-          this.pos = 0;
-        } else {
-          // 判断当前元素与上一个元素是否相同
-          if (data[i].id === data[i - 1].id) {
-            this.spanArr[this.pos] += 1;
-            this.spanArr.push(0);
-          } else {
-            this.spanArr.push(1);
-            this.pos = i;
-          }
-        }
-      }
-    },
-    cellMerge({ row, column, rowIndex, columnIndex }) {
-      if (columnIndex === 0) {
-        const _row = this.spanArr[rowIndex];
-        const _col = _row > 0 ? 1 : 0;
-        return {
-          rowspan: _row,
-          colspan: _col
-        };
-      }
-    },
     listResources() {
       this.axios
         .get("/api/admin/resources", {
@@ -275,7 +227,7 @@ export default {
       });
     },
     addOrEditResource() {
-      if (this.resourceForm.resourceName.trim() === "") {
+      if (this.resourceForm.resourceName.trim() == "") {
         this.$message.error("资源名不能为空");
         return false;
       }
