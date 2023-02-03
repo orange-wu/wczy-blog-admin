@@ -64,7 +64,7 @@
           <el-switch
             v-model="scope.row.hidden"
             @change="changeDisable(scope.row)"
-            disabled="true"
+            :disabled="true"
           />
         </template>
       </el-table-column>
