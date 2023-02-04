@@ -145,7 +145,6 @@
 export default {
   created() {
     this.listResources();
-    this.getSpanArr(this.resourceList);
   },
   data() {
     return {
@@ -180,28 +179,33 @@ export default {
     getSpanArr(data) {
       for (let i = 0; i < data.length; i++) {
         if (i === 0) {
-          this.spanArr.push(1);
-          this.pos = 0;
+          this.spanArr[0] = 1;
+          this.index = 0;
         } else {
           // 判断当前元素与上一个元素是否相同
-          if (data[i].id === data[i - 1].id) {
-            this.spanArr[this.pos] += 1;
-            this.spanArr.push(0);
+          if (data[i].parentId === data[i - 1].parentId) {
+            this.spanArr[i] = 0;
+            this.spanArr[this.index] += 1;
           } else {
-            this.spanArr.push(1);
-            this.pos = i;
+            this.spanArr[i] = 1;
+            this.index = i;
           }
         }
       }
     },
-    cellMerge({ row, column, rowIndex, columnIndex }) {
+    cellMerge({ rowIndex, columnIndex }) {
       if (columnIndex === 0) {
-        const _row = this.spanArr[rowIndex];
-        const _col = _row > 0 ? 1 : 0;
-        return {
-          rowspan: _row,
-          colspan: _col
-        };
+        if (this.spanArr[rowIndex] > 0) {
+          return {
+            rowspan: this.spanArr[rowIndex],
+            colspan: 1
+          };
+        } else {
+          return {
+            rowspan: 0,
+            colspan: 0
+          };
+        }
       }
     },
     listResources() {
@@ -214,6 +218,7 @@ export default {
         .then(({ data }) => {
           this.resourceList = data.data;
           this.loading = false;
+          this.getSpanArr(this.resourceList);
         });
     },
     changeResource(resource) {
