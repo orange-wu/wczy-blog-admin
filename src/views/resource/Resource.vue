@@ -145,6 +145,7 @@
 export default {
   created() {
     this.listResources();
+    this.listModularOptions();
   },
   data() {
     return {
@@ -207,6 +208,11 @@ export default {
           };
         }
       }
+    },
+    listModularOptions() {
+      this.axios.get("/api/admin/modular").then(({ data }) => {
+        this.modularOptions = data.data;
+      });
     },
     listResources() {
       this.axios
