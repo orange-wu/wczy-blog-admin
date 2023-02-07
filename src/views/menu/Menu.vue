@@ -61,11 +61,7 @@
       <!-- 是否隐藏 -->
       <el-table-column prop="hidden" label="隐藏" align="center" width="80">
         <template slot-scope="scope">
-          <el-switch
-            v-model="scope.row.hidden"
-            @change="changeDisable(scope.row)"
-            :disabled="true"
-          />
+          <el-switch v-model="scope.row.hidden" :disabled="true" />
         </template>
       </el-table-column>
       <!-- 创建时间 -->
