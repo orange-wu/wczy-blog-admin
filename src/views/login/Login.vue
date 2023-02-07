@@ -37,7 +37,7 @@
 </template>
 
 <script>
-import { generaMenu } from "../../assets/js/menu";
+import { generaMenu } from "@/assets/js/menu";
 export default {
   data: function() {
     return {
@@ -90,15 +90,14 @@ export default {
   bottom: 0;
   right: 0;
   left: 0;
-  background: url(https://static.talkxj.com/config/0w3pdr.jpg) center center /
-    cover no-repeat;
+  background: url(../../assets/img/login.png) center center / cover no-repeat;
 }
 .login-card {
   position: absolute;
   top: 0;
   bottom: 0;
   right: 0;
-  background: #fff;
+  background: rgba(255, 255, 255, 0);
   padding: 170px 60px 180px;
   width: 350px;
 }
