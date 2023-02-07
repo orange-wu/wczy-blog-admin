@@ -83,11 +83,7 @@
       <!-- 操作 -->
       <el-table-column label="操作" align="center" width="200">
         <template slot-scope="scope">
-          <el-button
-            type="text"
-            size="mini"
-            @click="openModel(scope.row, 1)"
-          >
+          <el-button type="text" size="mini" @click="openModel(scope.row, 1)">
             <i class="el-icon-plus" /> 新增
           </el-button>
           <el-button type="text" size="mini" @click="openModel(scope.row, 2)">
