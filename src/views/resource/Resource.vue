@@ -15,8 +15,10 @@
       <div style="margin-left:auto">
         <el-select
           clearable
+          multiple
+          collapse-tags
           v-model="modularSearch"
-          placeholder="请选择来源"
+          placeholder="请选择接口资源模块名"
           size="small"
           style="margin-right:1rem"
         >
@@ -149,7 +151,7 @@ export default {
   },
   data() {
     return {
-      modularSearch: "",
+      modularSearch: [],
       modularOptions: [
         {
           modularId: "",
@@ -158,7 +160,6 @@ export default {
       ],
       spanArr: [],
       loading: true,
-      keywords: "",
       resourceList: [
         {
           id: "",
@@ -218,7 +219,7 @@ export default {
       this.axios
         .get("/api/admin/resources", {
           params: {
-            keywords: this.keywords
+            parentId: this.modularSearch.join(",")
           }
         })
         .then(({ data }) => {
