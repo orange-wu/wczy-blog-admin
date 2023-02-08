@@ -17,6 +17,7 @@
           clearable
           multiple
           collapse-tags
+          filterable
           v-model="modularSearch"
           placeholder="请选择接口资源模块名"
           size="small"
