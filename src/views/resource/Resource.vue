@@ -173,7 +173,15 @@ export default {
       ],
       addModule: false,
       addResource: false,
-      resourceForm: {}
+      //todo 表单校验
+      resourceForm: {
+        id: null,
+        parentId: "",
+        resourceName: "",
+        url: "",
+        requestMethod: "",
+        anonymous: false
+      }
     };
   },
   methods: {
