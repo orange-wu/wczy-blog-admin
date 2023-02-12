@@ -95,8 +95,14 @@
     <!-- 新增模态框 -->
     <el-dialog :visible.sync="addModule" width="30%">
       <div class="dialog-title-container" slot="title" ref="moduleTitle" />
-      <el-form label-width="80px" size="medium" :model="resourceForm">
-        <el-form-item label="模块名">
+      <el-form
+        label-width="80px"
+        size="medium"
+        ref="formItem"
+        :model="resourceForm"
+        :rules="formRules"
+      >
+        <el-form-item label="模块名" prop="parentId">
           <el-select
             clearable
             v-model="resourceForm.parentId"
@@ -111,13 +117,13 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="接口名">
+        <el-form-item label="接口名" prop="resourceName">
           <el-input v-model="resourceForm.resourceName" style="width:220px" />
         </el-form-item>
-        <el-form-item label="接口路径">
+        <el-form-item label="接口路径" prop="url">
           <el-input v-model="resourceForm.url" style="width:220px" />
         </el-form-item>
-        <el-form-item label="请求方式">
+        <el-form-item label="请求方式" prop="requestMethod">
           <el-radio-group v-model="resourceForm.requestMethod">
             <el-radio :label="'GET'">GET</el-radio>
             <el-radio :label="'POST'">POST</el-radio>
@@ -173,14 +179,27 @@ export default {
       ],
       addModule: false,
       addResource: false,
-      //todo 表单校验
       resourceForm: {
         id: null,
         parentId: "",
         resourceName: "",
         url: "",
         requestMethod: "",
-        anonymous: false
+        anonymous: ""
+      },
+      formRules: {
+        parentId: [
+          { required: true, message: "请选择接口资源模块", trigger: "blur" }
+        ],
+        resourceName: [
+          { required: true, message: "请输入接口名称", trigger: "blur" }
+        ],
+        url: [
+          { required: true, message: "请输入接口请求地址", trigger: "blur" }
+        ],
+        requestMethod: [
+          { required: true, message: "请选择接口请求方式", trigger: "blur" }
+        ]
       }
     };
   },
@@ -262,28 +281,28 @@ export default {
       });
     },
     addOrEditResource() {
-      if (this.resourceForm.resourceName.trim() === "") {
-        this.$message.error("资源名不能为空");
-        return false;
-      }
-      this.axios
-        .post("/api/admin/resources", this.resourceForm)
-        .then(({ data }) => {
-          if (data.flag) {
-            this.$notify.success({
-              title: "成功",
-              message: data.message
+      this.$refs.formItem.validate(valid => {
+        if (valid) {
+          this.axios
+            .post("/api/admin/resources", this.resourceForm)
+            .then(({ data }) => {
+              if (data.flag) {
+                this.$notify.success({
+                  title: "成功",
+                  message: data.message
+                });
+                this.listResources();
+              } else {
+                this.$notify.error({
+                  title: "失败",
+                  message: data.message
+                });
+              }
+              this.addModule = false;
+              this.addResource = false;
             });
-            this.listResources();
-          } else {
-            this.$notify.error({
-              title: "失败",
-              message: data.message
-            });
-          }
-          this.addModule = false;
-          this.addResource = false;
-        });
+        }
+      });
     }
   },
   computed: {
