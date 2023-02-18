@@ -35,7 +35,7 @@
           size="small"
           icon="el-icon-search"
           style="margin-left:1rem"
-          @click="listResources"
+          @click="searchResources"
         >
           搜索
         </el-button>
@@ -92,6 +92,18 @@
         </template>
       </el-table-column>
     </el-table>
+    <!-- 分页 -->
+    <el-pagination
+      class="pagination-container"
+      background
+      @size-change="sizeChange"
+      @current-change="currentChange"
+      :current-page="pageNumber"
+      :page-size="pageSize"
+      :total="total"
+      :page-sizes="[10, 20]"
+      layout="total, sizes, prev, pager, next, jumper"
+    />
     <!-- 新增模态框 -->
     <el-dialog :visible.sync="addModule" width="30%">
       <div class="dialog-title-container" slot="title" ref="moduleTitle" />
@@ -156,6 +168,9 @@ export default {
   },
   data() {
     return {
+      pageNumber: 1,
+      pageSize: 10,
+      total: 0,
       modularSearch: [],
       modularOptions: [
         {
@@ -204,6 +219,18 @@ export default {
     };
   },
   methods: {
+    searchResources() {
+      this.pageNumber = 1;
+      this.listResources();
+    },
+    sizeChange(pageSize) {
+      this.pageSize = pageSize;
+      this.listResources();
+    },
+    currentChange(pageNumber) {
+      this.pageNumber = pageNumber;
+      this.listResources();
+    },
     getSpanArr(data) {
       for (let i = 0; i < data.length; i++) {
         if (i === 0) {
@@ -245,11 +272,15 @@ export default {
       this.axios
         .get("/api/admin/resources", {
           params: {
+            pageNumber: this.pageNumber,
+            pageSize: this.pageSize,
             parentId: this.modularSearch.join(",")
           }
         })
         .then(({ data }) => {
-          this.resourceList = data.data;
+          // this.resourceList = data.data;
+          this.resourceList = data.data.records;
+          this.total = data.data.total;
           this.loading = false;
           this.getSpanArr(this.resourceList);
         });
