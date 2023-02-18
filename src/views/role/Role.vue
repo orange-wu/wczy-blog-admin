@@ -7,23 +7,14 @@
         type="primary"
         size="small"
         icon="el-icon-plus"
-        @click="openMenuModel(null)"
+        @click="openRoleModel(null)"
       >
         新增
-      </el-button>
-      <el-button
-        type="danger"
-        size="small"
-        icon="el-icon-delete"
-        :disabled="this.roleIdList.length == 0"
-        @click="isDelete = true"
-      >
-        批量删除
       </el-button>
       <!-- 条件筛选 -->
       <div style="margin-left:auto">
         <el-input
-          v-model="keywords"
+          v-model="roleName"
           prefix-icon="el-icon-search"
           size="small"
           placeholder="请输入角色名"
@@ -42,16 +33,9 @@
       </div>
     </div>
     <!-- 表格展示 -->
-    <el-table
-      border
-      :data="roleList"
-      @selection-change="selectionChange"
-      v-loading="loading"
-    >
-      <!-- 表格列 -->
-      <el-table-column type="selection" width="55" />
+    <el-table border :data="roleList" v-loading="loading">
       <el-table-column prop="roleName" label="角色名" align="center" />
-      <el-table-column prop="roleLabel" label="权限标签" align="center">
+      <el-table-column prop="roleLabel" label="权限名" align="center">
         <template slot-scope="scope">
           <el-tag>
             {{ scope.row.roleLabel }}
@@ -60,14 +44,7 @@
       </el-table-column>
       <el-table-column prop="isDisable" label="禁用" align="center" width="100">
         <template slot-scope="scope">
-          <el-switch
-            v-model="scope.row.isDisable"
-            active-color="#13ce66"
-            inactive-color="#F4F4F5"
-            :active-value="1"
-            :inactive-value="0"
-            @change="changeDisable(scope.row)"
-          />
+          <el-switch v-model="scope.row.disable" :disabled="true" />
         </template>
       </el-table-column>
       <el-table-column
@@ -84,15 +61,8 @@
       <!-- 列操作 -->
       <el-table-column label="操作" align="center" width="220">
         <template slot-scope="scope">
-          <el-button type="text" size="mini" @click="openMenuModel(scope.row)">
-            <i class="el-icon-edit" /> 菜单权限
-          </el-button>
-          <el-button
-            type="text"
-            size="mini"
-            @click="openResourceModel(scope.row)"
-          >
-            <i class="el-icon-folder-checked" /> 资源权限
+          <el-button type="text" size="mini" @click="openRoleModel(scope.row)">
+            <i class="el-icon-edit" /> 角色权限
           </el-button>
           <el-popconfirm
             title="确定删除吗？"
@@ -112,76 +82,72 @@
       background
       @size-change="sizeChange"
       @current-change="currentChange"
-      :current-page="current"
-      :page-size="size"
-      :total="count"
+      :current-page="pageNumber"
+      :page-size="pageSize"
+      :total="total"
       :page-sizes="[10, 20]"
       layout="total, sizes, prev, pager, next, jumper"
     />
     <!-- 菜单对话框 -->
-    <el-dialog :visible.sync="roleMenu" width="30%">
+    <el-dialog :visible.sync="roleShow" width="30%">
       <div class="dialog-title-container" slot="title" ref="roleTitle" />
-      <el-form label-width="80px" size="medium" :model="roleForm">
-        <el-form-item label="角色名">
-          <el-input v-model="roleForm.roleName" style="width:250px" />
-        </el-form-item>
-        <el-form-item label="权限标签">
-          <el-input v-model="roleForm.roleLabel" style="width:250px" />
-        </el-form-item>
-        <el-form-item label="菜单权限">
-          <el-tree
-            :data="menuList"
-            :default-checked-keys="roleForm.menuIdList"
-            check-strictly
-            show-checkbox
-            node-key="id"
-            ref="menuTree"
-          />
-        </el-form-item>
+      <el-form
+        label-width="auto"
+        size="medium"
+        :model="roleForm"
+        :rules="formRules"
+        ref="formItem"
+      >
+        <el-row>
+          <el-col :span="8">
+            <el-form-item label="角色名" prop="roleName">
+              <el-input v-model="roleForm.roleName" style="width:100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="权限名" prop="roleLabel">
+              <el-input v-model="roleForm.roleLabel" style="width:100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="是否禁用">
+              <el-radio-group v-model="roleForm.disable">
+                <el-radio :label="true">是</el-radio>
+                <el-radio :label="false">否</el-radio>
+              </el-radio-group>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="12">
+            <el-form-item label="菜单权限">
+              <el-tree
+                :data="menuList"
+                :default-checked-keys="roleForm.menuIds"
+                accordion
+                show-checkbox
+                node-key="id"
+                ref="menuTree"
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="资源权限" label-width="auto">
+              <el-tree
+                :data="resourceList"
+                :default-checked-keys="roleForm.resourceIds"
+                accordion
+                show-checkbox
+                node-key="id"
+                ref="resourceTree"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-form>
       <div slot="footer">
-        <el-button @click="roleMenu = false">取 消</el-button>
-        <el-button type="primary" @click="saveOrUpdateRoleMenu">
-          确 定
-        </el-button>
-      </div>
-    </el-dialog>
-    <!-- 资源对话框 -->
-    <el-dialog :visible.sync="roleResource" width="30%" top="9vh">
-      <div class="dialog-title-container" slot="title">修改资源权限</div>
-      <el-form label-width="80px" size="medium" :model="roleForm">
-        <el-form-item label="角色名">
-          <el-input v-model="roleForm.roleName" style="width:250px" />
-        </el-form-item>
-        <el-form-item label="权限标签">
-          <el-input v-model="roleForm.roleLabel" style="width:250px" />
-        </el-form-item>
-        <el-form-item label="资源权限">
-          <el-tree
-            :data="resourceList"
-            :default-checked-keys="roleForm.resourceIdList"
-            show-checkbox
-            node-key="id"
-            ref="resourceTree"
-          />
-        </el-form-item>
-      </el-form>
-      <div slot="footer">
-        <el-button @click="roleResource = false">取 消</el-button>
-        <el-button type="primary" @click="saveOrUpdateRoleResource">
-          确 定
-        </el-button>
-      </div>
-    </el-dialog>
-    <!-- 批量删除对话框 -->
-    <el-dialog :visible.sync="isDelete" width="30%">
-      <div class="dialog-title-container" slot="title">
-        <i class="el-icon-warning" style="color:#ff9900" />提示
-      </div>
-      <div style="font-size:1rem">是否删除选中项？</div>
-      <div slot="footer">
-        <el-button @click="isDelete = false">取 消</el-button>
-        <el-button type="primary" @click="deleteRoles(null)">
+        <el-button @click="roleShow = false">取 消</el-button>
+        <el-button type="primary" @click="saveOrUpdateRole">
           确 定
         </el-button>
       </div>
@@ -199,71 +165,73 @@ export default {
       loading: true,
       isDelete: false,
       roleList: [],
-      roleIdList: [],
-      keywords: null,
-      current: 1,
-      size: 10,
-      count: 0,
-      roleMenu: false,
-      roleResource: false,
+      roleName: null,
+      pageNumber: 1,
+      pageSize: 10,
+      total: 0,
+      roleShow: false,
       resourceList: [],
       menuList: [],
       roleForm: {
+        id: null,
         roleName: "",
         roleLabel: "",
-        resourceIdList: [],
-        menuIdList: []
+        disable: false,
+        resourceIds: [],
+        menuIds: []
+      },
+      formRules: {
+        roleName: [
+          { required: true, message: "请输入角色名", trigger: "blur" }
+        ],
+        roleLabel: [
+          { required: true, message: "请输入权限名", trigger: "blur" }
+        ]
       }
     };
   },
   methods: {
     searchRoles() {
-      this.current = 1;
+      this.pageNumber = 1;
       this.listRoles();
     },
-    sizeChange(size) {
-      this.size = size;
+    sizeChange(pageSize) {
+      this.pageSize = pageSize;
       this.listRoles();
     },
-    currentChange(current) {
-      this.current = current;
+    currentChange(pageNumber) {
+      this.pageNumber = pageNumber;
       this.listRoles();
-    },
-    selectionChange(roleList) {
-      this.roleIdList = [];
-      roleList.forEach(item => {
-        this.roleIdList.push(item.id);
-      });
     },
     listRoles() {
       this.axios
         .get("/api/admin/roles", {
           params: {
-            current: this.current,
-            size: this.size,
-            keywords: this.keywords
+            pageNumber: this.pageNumber,
+            pageSize: this.pageSize,
+            roleName: this.roleName
           }
         })
         .then(({ data }) => {
-          this.roleList = data.data.recordList;
-          this.count = data.data.count;
+          this.roleList = data.data.records;
+          this.total = data.data.total;
           this.loading = false;
         });
+      this.roleResourceList();
+      this.roleMenuList();
+    },
+    roleResourceList() {
       this.axios.get("/api/admin/role/resources").then(({ data }) => {
         this.resourceList = data.data;
       });
+    },
+    roleMenuList() {
       this.axios.get("/api/admin/role/menus").then(({ data }) => {
         this.menuList = data.data;
       });
     },
     deleteRoles(id) {
-      var param = {};
-      if (id == null) {
-        param = { data: this.roleIdList };
-      } else {
-        param = { data: [id] };
-      }
-      this.axios.delete("/api/admin/roles", param).then(({ data }) => {
+      this.axios.delete("/api/admin/roles/" + id).then(({ data }) => {
         if (data.flag) {
           this.$notify.success({
             title: "成功",
@@ -279,10 +247,7 @@ export default {
         this.isDelete = false;
       });
     },
-    openMenuModel(role) {
-      this.$nextTick(function() {
-        this.$refs.menuTree.setCheckedKeys([]);
-      });
+    openRoleModel(role) {
       this.$refs.roleTitle.innerHTML = role ? "修改角色" : "新增角色";
       if (role != null) {
         this.roleForm = JSON.parse(JSON.stringify(role));
@@ -290,65 +255,52 @@ export default {
         this.roleForm = {
           roleName: "",
           roleLabel: "",
-          resourceIdList: [],
-          menuIdList: []
+          disable: false,
+          resourceIds: [],
+          menuIds: []
         };
       }
-      this.roleMenu = true;
-    },
-    openResourceModel(role) {
-      this.$nextTick(function() {
-        this.$refs.resourceTree.setCheckedKeys([]);
-      });
-      this.roleForm = JSON.parse(JSON.stringify(role));
-      this.roleResource = true;
-    },
-    saveOrUpdateRoleResource() {
-      this.roleForm.menuIdList = null;
-      this.roleForm.resourceIdList = this.$refs.resourceTree.getCheckedKeys();
-      this.axios.post("/api/admin/role", this.roleForm).then(({ data }) => {
-        if (data.flag) {
-          this.$notify.success({
-            title: "成功",
-            message: data.message
-          });
-          this.listRoles();
-        } else {
-          this.$notify.error({
-            title: "失败",
-            message: data.message
-          });
-        }
-        this.roleResource = false;
+      this.roleShow = true;
+      this.$nextTick(() => {
+        this.$refs.menuTree.setCheckedKeys(
+          this.roleForm.menuIds == null ? [] : this.roleForm.menuIds
+        );
+        this.$refs.resourceTree.setCheckedKeys(
+          this.roleForm.resourceIds == null ? [] : this.roleForm.resourceIds
+        );
       });
     },
-    saveOrUpdateRoleMenu() {
-      if (this.roleForm.roleName.trim() == "") {
-        this.$message.error("角色名不能为空");
-        return false;
-      }
-      if (this.roleForm.roleLabel.trim() == "") {
-        this.$message.error("权限标签不能为空");
-        return false;
-      }
-      this.roleForm.resourceIdList = null;
-      this.roleForm.menuIdList = this.$refs.menuTree
-        .getCheckedKeys()
-        .concat(this.$refs.menuTree.getHalfCheckedKeys());
-      this.axios.post("/api/admin/role", this.roleForm).then(({ data }) => {
-        if (data.flag) {
-          this.$notify.success({
-            title: "成功",
-            message: data.message
-          });
-          this.listRoles();
-        } else {
-          this.$notify.error({
-            title: "失败",
-            message: data.message
+    saveOrUpdateRole() {
+      this.$refs.formItem.validate(valid => {
+        if (valid) {
+          this.roleForm.resourceIds = this.$refs.resourceTree
+            .getCheckedKeys()
+            .concat(this.$refs.menuTree.getHalfCheckedKeys());
+          this.roleForm.menuIds = this.$refs.menuTree
+            .getCheckedKeys()
+            .concat(this.$refs.menuTree.getHalfCheckedKeys());
+          let api;
+          if (this.roleForm.id == null) {
+            api = "/api/admin/saveRole";
+          } else {
+            api = "/api/admin/updateRole";
+          }
+          this.axios.post(api, this.roleForm).then(({ data }) => {
+            if (data.flag) {
+              this.$notify.success({
+                title: "成功",
+                message: data.message
+              });
+              this.listRoles();
+            } else {
+              this.$notify.error({
+                title: "失败",
+                message: data.message
+              });
+            }
+            this.roleShow = false;
           });
         }
-        this.roleMenu = false;
       });
     }
   }
