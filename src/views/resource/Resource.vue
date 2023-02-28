@@ -52,6 +52,7 @@
       <el-table-column prop="modularName" label="模块名" width="120" />
       <el-table-column prop="resourceName" label="接口名" width="150" />
       <el-table-column prop="url" label="接口路径" width="200" />
+      <el-table-column prop="permission" label="权限名" width="200" />
       <el-table-column prop="requestMethod" label="请求方式" width="100">
         <template slot-scope="scope" v-if="scope.row.requestMethod">
           <el-tag :type="tagType(scope.row.requestMethod)">
@@ -135,6 +136,9 @@
         <el-form-item label="接口路径" prop="url">
           <el-input v-model="resourceForm.url" style="width:220px" />
         </el-form-item>
+        <el-form-item label="权限名" prop="permission">
+          <el-input v-model="resourceForm.permission" style="width:220px" />
+        </el-form-item>
         <el-form-item label="请求方式" prop="requestMethod">
           <el-radio-group v-model="resourceForm.requestMethod">
             <el-radio :label="'GET'">GET</el-radio>
@@ -187,6 +191,7 @@ export default {
           modularName: "",
           resourceName: "",
           url: "",
+          permission: "",
           requestMethod: "",
           anonymous: false,
           createTime: ""
@@ -199,6 +204,7 @@ export default {
         parentId: "",
         resourceName: "",
         url: "",
+        permission: "",
         requestMethod: "",
         anonymous: ""
       },
@@ -211,6 +217,9 @@ export default {
         ],
         url: [
           { required: true, message: "请输入接口请求地址", trigger: "blur" }
+        ],
+        permission: [
+          { required: true, message: "请输入接口权限名", trigger: "blur" }
         ],
         requestMethod: [
           { required: true, message: "请选择接口请求方式", trigger: "blur" }
@@ -294,6 +303,7 @@ export default {
         this.$refs.moduleTitle.innerHTML = "添加接口";
       }
       this.addModule = true;
+      this.$refs.formItem.resetFields();
     },
     deleteResource(id) {
       this.axios.delete("/api/admin/resources/" + id).then(({ data }) => {
