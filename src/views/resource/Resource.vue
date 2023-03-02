@@ -137,7 +137,11 @@
           <el-input v-model="resourceForm.url" style="width:220px" />
         </el-form-item>
         <el-form-item label="权限名" prop="permission">
-          <el-input v-model="resourceForm.permission" style="width:220px" />
+          <el-input
+            v-model="resourceForm.permission"
+            style="width:220px"
+            :disabled="permissionUpdate"
+          />
         </el-form-item>
         <el-form-item label="请求方式" prop="requestMethod">
           <el-radio-group v-model="resourceForm.requestMethod">
@@ -199,6 +203,7 @@ export default {
       ],
       addModule: false,
       addResource: false,
+      permissionUpdate: false,
       resourceForm: {
         id: null,
         parentId: "",
@@ -298,9 +303,11 @@ export default {
       if (resource != null) {
         this.resourceForm = JSON.parse(JSON.stringify(resource));
         this.$refs.moduleTitle.innerHTML = "修改接口";
+        this.permissionUpdate = true;
       } else {
         this.resourceForm = {};
         this.$refs.moduleTitle.innerHTML = "添加接口";
+        this.permissionUpdate = false;
       }
       this.addModule = true;
       this.$refs.formItem.resetFields();

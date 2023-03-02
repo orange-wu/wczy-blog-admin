@@ -106,7 +106,11 @@
           </el-col>
           <el-col :span="8">
             <el-form-item label="权限名" prop="roleLabel">
-              <el-input v-model="roleForm.roleLabel" style="width:100%" />
+              <el-input
+                v-model="roleForm.roleLabel"
+                style="width:100%"
+                :disabled="roleLabelUpdate"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="8">
@@ -170,6 +174,7 @@ export default {
       pageSize: 10,
       total: 0,
       roleShow: false,
+      roleLabelUpdate: false,
       resourceList: [],
       menuList: [],
       roleForm: {
@@ -250,8 +255,10 @@ export default {
     openRoleModel(role) {
       this.$refs.roleTitle.innerHTML = role ? "修改角色" : "新增角色";
       if (role != null) {
+        this.roleLabelUpdate = true;
         this.roleForm = JSON.parse(JSON.stringify(role));
       } else {
+        this.roleLabelUpdate = false;
         this.roleForm = {
           roleName: "",
           roleLabel: "",
