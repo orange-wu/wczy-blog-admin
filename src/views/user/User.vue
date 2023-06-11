@@ -21,7 +21,7 @@
           />
         </el-select>
         <el-input
-          v-model="keywords"
+          v-model="nickName"
           prefix-icon="el-icon-search"
           size="small"
           placeholder="请输入昵称"
@@ -42,14 +42,9 @@
     <!-- 表格展示 -->
     <el-table border :data="userList" v-loading="loading">
       <!-- 表格列 -->
-      <el-table-column
-        prop="linkAvatar"
-        label="头像"
-        align="center"
-        width="100"
-      >
+      <el-table-column prop="avatar" label="头像" align="center" width="100">
         <template slot-scope="scope">
-          <img :src="scope.row.avatar" width="40" height="40" />
+          <img :src="scope.row.avatar" width="40" height="40" alt="用户头像" />
         </template>
       </el-table-column>
       <el-table-column
@@ -65,9 +60,9 @@
         width="80"
       >
         <template slot-scope="scope">
-          <el-tag type="success" v-if="scope.row.loginType == 1">邮箱</el-tag>
-          <el-tag v-if="scope.row.loginType == 2">QQ</el-tag>
-          <el-tag type="danger" v-if="scope.row.loginType == 3">微博</el-tag>
+          <el-tag type="success" v-if="scope.row.loginType === 1">邮箱</el-tag>
+          <el-tag v-if="scope.row.loginType === 2">QQ</el-tag>
+          <el-tag type="danger" v-if="scope.row.loginType === 3">微博</el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="roleList" label="用户角色" align="center">
@@ -83,14 +78,7 @@
       </el-table-column>
       <el-table-column prop="isDisable" label="禁用" align="center" width="100">
         <template slot-scope="scope">
-          <el-switch
-            v-model="scope.row.isDisable"
-            active-color="#13ce66"
-            inactive-color="#F4F4F5"
-            :active-value="1"
-            :inactive-value="0"
-            @change="changeDisable(scope.row)"
-          />
+          <el-switch v-model="scope.row.disable" :disabled="true" />
         </template>
       </el-table-column>
       <el-table-column
@@ -146,9 +134,9 @@
       background
       @size-change="sizeChange"
       @current-change="currentChange"
-      :current-page="current"
-      :page-size="size"
-      :total="count"
+      :current-page="pageNumber"
+      :page-size="pageSize"
+      :total="total"
       :page-sizes="[10, 20]"
       layout="total, sizes, prev, pager, next, jumper"
     />
@@ -157,12 +145,23 @@
       <div class="dialog-title-container" slot="title">
         修改用户
       </div>
-      <el-form label-width="60px" size="medium" :model="userForm">
-        <el-form-item label="昵称">
+      <el-form
+        label-width="auto"
+        size="medium"
+        :model="userForm"
+        :rules="userRules"
+      >
+        <el-form-item label="昵称" prop="nickname">
           <el-input v-model="userForm.nickname" style="width:220px" />
         </el-form-item>
-        <el-form-item label="角色">
-          <el-checkbox-group v-model="roleIdList">
+        <el-form-item label="是否禁用">
+          <el-radio-group v-model="userForm.disable">
+            <el-radio :label="true">是</el-radio>
+            <el-radio :label="false">否</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="角色" prop="roleIdList">
+          <el-checkbox-group v-model="userForm.roleIdList">
             <el-checkbox
               v-for="item of userRoleList"
               :key="item.id"
@@ -189,18 +188,40 @@ export default {
     this.listUsers();
     this.listRoles();
   },
-  data: function() {
+  data() {
     return {
-      loading: true,
+      //修改表单相关参数
       isEdit: false,
       userForm: {
-        userInfoId: null,
-        nickname: ""
+        id: null,
+        nickname: "",
+        disable: "",
+        roleIdList: []
       },
-      loginType: null,
+      userRules: {
+        nickname: [{ required: true, message: "请输入昵称", trigger: "blur" }],
+        roleIdList: [
+          { required: true, message: "请选择对应角色", trigger: "blur" }
+        ]
+      },
+      //表格相关参数
+      loading: true,
       userRoleList: [],
-      roleIdList: [],
-      userList: [],
+      userList: [
+        {
+          id: "",
+          avatar: "",
+          nickname: "",
+          roleList: [],
+          loginType: "",
+          ipAddress: "",
+          ipSource: "",
+          createTime: "",
+          lastLoginTime: "",
+          disable: false
+        }
+      ],
+      //查询条件参数
       typeList: [
         {
           type: 1,
@@ -215,84 +236,84 @@ export default {
           desc: "微博"
         }
       ],
-      keywords: null,
-      current: 1,
-      size: 10,
-      count: 0
+      loginType: null,
+      nickName: null,
+      pageNumber: 1,
+      pageSize: 10,
+      total: 0
     };
   },
   methods: {
     searchUsers() {
-      this.current = 1;
+      this.pageNumber = 1;
       this.listUsers();
     },
-    sizeChange(size) {
-      this.size = size;
+    sizeChange(pageSize) {
+      this.pageSize = pageSize;
       this.listUsers();
     },
-    currentChange(current) {
-      this.current = current;
+    currentChange(pageNumber) {
+      this.pageNumber = pageNumber;
       this.listUsers();
-    },
-    changeDisable(user) {
-      this.axios.put("/api/admin/users/disable", {
-        id: user.userInfoId,
-        isDisable: user.isDisable
-      });
     },
     openEditModel(user) {
-      this.roleIdList = [];
-      this.userForm = JSON.parse(JSON.stringify(user));
-      this.userForm.roleList.forEach(item => {
-        this.roleIdList.push(item.id);
+      this.userForm.id = user.id;
+      this.userForm.disable = user.disable;
+      this.userForm.nickname = user.nickname;
+      this.userForm.roleIdList = [];
+      user.roleList.forEach(item => {
+        this.userForm.roleIdList.push(item.id);
       });
       this.isEdit = true;
     },
     editUserRole() {
-      this.userForm.roleIdList = this.roleIdList;
-      this.axios
-        .put("/api/admin/users/role", this.userForm)
-        .then(({ data }) => {
-          if (data.flag) {
-            this.$notify.success({
-              title: "成功",
-              message: data.message
+      this.$refs.userForm.validate(valid => {
+        if (valid) {
+          this.axios
+            .put("/api/admin/updateUserRole", this.userForm)
+            .then(({ data }) => {
+              if (data.flag) {
+                this.$notify.success({
+                  title: "成功",
+                  message: data.message
+                });
+                this.listUsers();
+              } else {
+                this.$notify.error({
+                  title: "失败",
+                  message: data.message
+                });
+              }
+              this.isEdit = false;
             });
-            this.listUsers();
-          } else {
-            this.$notify.error({
-              title: "失败",
-              message: data.message
-            });
-          }
-          this.isEdit = false;
-        });
+        }
+      });
     },
     listUsers() {
       this.axios
         .get("/api/admin/users", {
           params: {
-            current: this.current,
-            size: this.size,
-            keywords: this.keywords,
+            pageNumber: this.pageNumber,
+            pageSize: this.pageSize,
+            nickName: this.nickName,
             loginType: this.loginType
           }
         })
         .then(({ data }) => {
-          this.userList = data.data.recordList;
-          this.count = data.data.count;
+          this.userList = data.data.records;
+          this.total = data.data.total;
           this.loading = false;
         });
     },
     listRoles() {
-      this.axios.get("/api/admin/users/role").then(({ data }) => {
+      this.axios.get("/api/admin/roleIdList").then(({ data }) => {
         this.userRoleList = data.data;
       });
     }
   },
   watch: {
     loginType() {
-      this.current = 1;
+      this.pageNumber = 1;
       this.listUsers();
     }
   }
